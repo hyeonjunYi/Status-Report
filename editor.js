@@ -45,8 +45,12 @@ const commonFields = [['title','보고서 제목'],['updated','보고 기준시�
 const trendBase = [['01 · 기본정보', [...commonFields,['summary','보고 요지','textarea']]], ['02 · 사고 개요', [['occurred','발생일시'],['address','발생장소']]]];
 const vehicleGroups = [...trendBase, ['03 · 사고 및 피해', [['vehicle','사고차량'],['driver','운전자'],['accident','사고내용','textarea'],['humanDamage','인명피해','textarea'],['vehicleDamage','차량피해','textarea'],['otherDamage','기타피해','textarea']]], ['04 · 경과 및 계획', [['timeline','시간대별 상황 (한 줄에 시각 | 내용)','textarea'],['future','향후계획 (수리 일정·운행 가능 여부 등)','textarea']]]];
 const injuryGroups = [...trendBase, ['03 · 부상 및 조치', [['subject','대상자 (소속·직급·성명)'],['accident','사고내용','textarea'],['injuryDetail','부상현황','textarea'],['measures','조치사항','textarea']]], ['04 · 경과 및 계획', [['timeline','시간대별 상황 (한 줄에 시각 | 내용)','textarea'],['future','향후계획','textarea']]]];
-const noticeGroups = [['01 · 알림 기본정보', [...commonFields.filter(f=>f[0]!=='updated'),['noticeText','알림 본문 (고인·관계·연령 등)','textarea']]], ['02 · 일정 및 장소', [['eventTime','일시'],['venue','빈소 / 행사장'],['address','장소 주소 (지도 표시)'],['funeralTime','발인'],['burial','장지'],['contact','연락처','textarea']]], ['03 · 마음 전하실 곳 (선택)', [['bank','은행'],['account','계좌번호'],['holder','예금주']]]];
-const groupsFor = type => type === 'notice' ? noticeGroups : ($('trendKind').value === 'injury' ? injuryGroups : vehicleGroups);
+const noticeGroupsFor = kind => {
+  const nt=FieldReport.noticeTypes[kind];
+  return [['01 · 알림 기본정보', [...commonFields.filter(f=>f[0]!=='updated'),['noticeText','알림 본문','textarea']]], ['02 · 일정 및 장소', [['eventTime',nt.time],['venue',nt.venue],['address','장소 주소 (지도 표시)'],...(kind==='funeral'?[['funeralTime','발인'],['burial','장지']]:[]),['contact','연락처','textarea'],['noticeDetails','추가 안내 (교통·주차·참석 안내 등, 선택)','textarea']]], ['03 · 마음 전하실 곳 (선택)', [['bank','은행'],['account','계좌번호'],['holder','예금주']]]];
+};
+const noticeGroups = noticeGroupsFor('funeral');
+const groupsFor = type => type === 'notice' ? noticeGroupsFor($('noticeKind').value) : ($('trendKind').value === 'injury' ? injuryGroups : vehicleGroups);
 let allFieldNames = Array.from(new Set([...vehicleGroups,...injuryGroups,...noticeGroups].flatMap(g=>g[1].map(f=>f[0]))));
 
 let photos = [], sample, css, reportCode, busy = false;
@@ -74,6 +78,7 @@ function buildForm(type) {
       l.textContent = label;
       const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
       input.id = 'f-' + name;
+      if(name==='noticeText') input.placeholder=FieldReport.noticeTypes[$('noticeKind').value].body;
       if(name === 'timeline') input.placeholder = '09:00 | 사고 발생\n09:10 | 현장 확인 및 조치';
       input.style.cssText = 'width: 100%; min-height: ' + (type === 'textarea' ? '64px' : '36px') + '; margin-top: 4px; padding: 6px 10px; font-size: 14px;';
       input.oninput = changed;
@@ -96,18 +101,20 @@ function collect() {
   const selectedType = $('reportTypeVal')?.value || 'trend';
   const data = {
     reportType: selectedType,
+    noticeKind: $('noticeKind').value,
     trendKind: $('trendKind').value,
     photos: photos.map(p => ({ ...p }))
   };
   allFieldNames.forEach(k => {
     data[k] = $('f-' + k) ? $('f-' + k).value : (window._formData?.[k] || '');
   });
-  if(selectedType==='notice') delete data.updated;
+  if(selectedType==='notice') {delete data.updated;if(data.noticeKind!=='funeral'){delete data.funeralTime;delete data.burial;}}
   return data;
 }
 
 function fill(d) {
   window._formData = { ...d };
+  $('noticeKind').value = FieldReport.noticeKind(d);
   const type = d.reportType === 'notice' ? 'notice' : 'trend';
   $('trendKind').value = d.trendKind === 'injury' ? 'injury' : 'vehicle';
   setReportType(type);
@@ -131,13 +138,14 @@ function fill(d) {
 
 function setReportType(type) {
   $('reportTypeVal').value=type;
+  $('noticeOptions').hidden=type!=='notice';
   const selected=type==='notice'?'notice':$('trendKind').value;
   $('templateSelect').value=selected;
   buildForm(type);
 }
 function fresh(){
   const type=$('reportTypeVal').value,kind=$('trendKind').value;
-  fill({reportType:type,trendKind:kind,title:type==='notice'?'부고 알림':kind==='injury'?'직원 부상에 따른 동향보고':'소방차량 사고발생 동향보고',unit:'계룡소방서 현장대응단',author:'현장대응단 소방장 이현준',phone:'010-4200-9870',updated:formatKST(),photos:[]});
+  fill({reportType:type,trendKind:kind,noticeKind:$('noticeKind').value,title:type==='notice'?FieldReport.noticeTypes[$('noticeKind').value].title:kind==='injury'?'직원 부상에 따른 동향보고':'소방차량 사고발생 동향보고',unit:'계룡소방서 현장대응단',author:'현장대응단 소방장 이현준',phone:'010-4200-9870',updated:formatKST(),photos:[]});
 }
 const drafts={};
 function switchType(type,kind){
@@ -147,6 +155,14 @@ function switchType(type,kind){
   else {$('reportTypeVal').value=type;$('trendKind').value=kind;fresh();}
 }
 $('templateSelect').onchange=()=>{const selected=$('templateSelect').value;switchType(selected==='notice'?'notice':'trend',selected==='injury'?'injury':'vehicle');};
+
+$('noticeKind').onchange=()=>{
+  const next=$('noticeKind').value, cur=collect();
+  const titles=Object.values(FieldReport.noticeTypes).map(x=>x.title);
+  if(!cur.title || titles.includes(cur.title)) cur.title=FieldReport.noticeTypes[next].title;
+  cur.noticeKind=next;
+  fill(cur);
+};
 
 function draw() {
   const root = $('photos');

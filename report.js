@@ -12,8 +12,24 @@ window.FieldReport = (() => {
       /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s)
     );
 
+  const noticeTypes = {
+    funeral:{title:'부고 알림',time:'별세일시',venue:'빈소',body:'고인·직원과의 관계·연령 등을 입력합니다.'},
+    wedding:{title:'결혼 알림',time:'예식일시',venue:'예식장 / 홀',body:'결혼 당사자·직원과의 관계·초대 문구 등을 입력합니다.'},
+    sixtieth:{title:'회갑 알림',time:'행사일시',venue:'행사장',body:'회갑을 맞으신 분·직원과의 관계·초대 문구 등을 입력합니다.'},
+    first_birthday:{title:'돌잔치 알림',time:'행사일시',venue:'행사장',body:'아이 이름·부모·초대 문구 등을 입력합니다.'},
+    other:{title:'경조사 알림',time:'행사일시',venue:'행사장',body:'행사명·대상자·안내 내용을 자유롭게 입력합니다.'}
+  };
+  function noticeKind(d){
+    if(noticeTypes[d.noticeKind]) return d.noticeKind;
+    const title=String(d.title||'');
+    if(/결혼|혼례|예식/.test(title))return 'wedding';
+    if(/회갑|환갑/.test(title))return 'sixtieth';
+    if(/돌잔치|첫돌/.test(title))return 'first_birthday';
+    return 'funeral';
+  }
   function renderAdditional(d) {
     const notice=d.reportType==='notice', injury=d.trendKind==='injury';
+    const nk=noticeKind(d), nt=noticeTypes[nk];
     const e=k=>esc(d[k]||'미기재');
     const pair=(label,key)=>`<dt>${label}</dt><dd>${e(key)}</dd>`;
     const map=d.address ? `<div class="additional-map"><iframe title="${notice?'행사장':'사고 발생장소'} 지도" src="https://maps.google.com/maps?q=${encodeURIComponent(d.address)}&output=embed" loading="lazy" allowfullscreen></iframe><a href="https://map.kakao.com/link/search/${encodeURIComponent(d.address)}" target="_blank" rel="noopener">지도에서 위치 확인</a></div>`:'';
@@ -22,7 +38,7 @@ window.FieldReport = (() => {
     const timeline=String(d.timeline||'').split('\n').filter(x=>x.trim()).map(line=>{const at=line.indexOf('|');return `<tr><td>${esc(at<0?'미기재':line.slice(0,at).trim())}</td><td>${esc(at<0?line:line.slice(at+1).trim())}</td></tr>`;}).join('');
     const content=notice?`
       <p class="additional-summary">${e('noticeText')}</p>
-      <section class="additional-section"><h3>일정 및 장소</h3><dl>${pair('일시','eventTime')}${pair('빈소 / 행사장','venue')}${pair('주소','address')}<dt>위치 지도</dt><dd>${map||'미기재'}</dd>${pair('발인','funeralTime')}${pair('장지','burial')}${pair('연락처','contact')}</dl></section>
+      <section class="additional-section"><h3>일정 및 장소</h3><dl>${pair(nt.time,'eventTime')}${pair(nt.venue,'venue')}${pair('주소','address')}<dt>위치 지도</dt><dd>${map||'미기재'}</dd>${nk==='funeral'?pair('발인','funeralTime')+pair('장지','burial'):''}${pair('연락처','contact')}${d.noticeDetails?pair('추가 안내','noticeDetails'):''}</dl></section>
       ${d.bank||d.account||d.holder?`<section class="additional-section"><h3>마음 전하실 곳</h3><dl>${pair('은행','bank')}${pair('계좌번호','account')}${pair('예금주','holder')}</dl></section>`:''}${gallery}`:`
       ${d.summary?`<p class="additional-summary">${e('summary')}</p>`:''}
       <section class="additional-section"><h3>01 · 사고 개요</h3><dl>${pair('발생일시','occurred')}${pair('발생장소','address')}<dt>위치 지도</dt><dd>${map||'미기재'}</dd>${injury?pair('대상자','subject'):pair('사고차량','vehicle')+pair('운전자','driver')}${pair('사고내용','accident')}</dl></section>
@@ -35,5 +51,5 @@ window.FieldReport = (() => {
 
   function render(d){return renderAdditional(d);}
   function mount(d){document.title=(d.title||'동향보고')+' | 계룡소방서';document.getElementById('report').innerHTML=render(d);}
-  return {render,mount,safePhoto};
+  return {render,mount,safePhoto,noticeTypes,noticeKind};
 })();

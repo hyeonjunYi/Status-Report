@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>동향보고·경조사 작성 | 현장대응단</title>
-  <link rel="stylesheet" href="editor.css?v=20261120-r2">
+  <link rel="stylesheet" href="editor.css?v=20261120-r3">
   <style>
     header .wrap { min-height: 48px; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; }
     header b { font-size: 16px; margin: 0; }
@@ -34,6 +34,10 @@
       <select id="templateSelect"><option value="vehicle">소방차량 사고발생 동향보고</option><option value="injury">직원 부상에 따른 동향보고</option><option value="notice">경조사알림</option></select>
       <input type="hidden" id="reportTypeVal" value="trend">
       <input type="hidden" id="trendKind" value="vehicle">
+    </div>
+    <div id="noticeOptions" class="type-selector" hidden>
+      <label for="noticeKind">경조사 종류</label>
+      <select id="noticeKind"><option value="funeral">부고</option><option value="wedding">결혼</option><option value="sixtieth">회갑</option><option value="first_birthday">돌잔치</option><option value="other">기타 경조사</option></select>
     </div>
     <!-- 2번 요청: 연동 버튼이 백업, 불러오기 다음에 배치 -->
     <p class="hint">동향보고 전용 저장소를 연동하세요. 게시하면 해당 저장소의 최신 보고서(index.html)가 교체됩니다.</p>
@@ -90,7 +94,7 @@
       </div>
     </div>
   </main>
-  <script src="report.js?v=20261120-r2"></script>
-  <script src="editor.js?v=20261120-r2"></script>
+  <script src="report.js?v=20261120-r3"></script>
+  <script src="editor.js?v=20261120-r3"></script>
 </body>
 </html>

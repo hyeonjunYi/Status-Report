@@ -6,3 +6,5 @@ header{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:20px max(
 .type-selector{flex-wrap:wrap}.type-selector>span{width:100%;font-weight:700}.type-selector button{flex:1 1 40%;min-height:48px}#trendOptions{padding:16px;background:#ECF2FE;border-radius:8px}#trendOptions select{width:100%;min-height:48px;margin-top:8px}@media(min-width:641px){.type-selector button{flex:1 1 15%}}@media(max-width:640px){input,textarea,select{font-size:16px!important;min-height:48px!important}.tools .btn-sm{min-height:44px!important}header .wrap>div{flex-wrap:wrap}}
 
 #templateSelect{width:100%;min-height:48px;border:1px solid var(--border);border-radius:6px;background:var(--canvas);color:var(--fg);padding:10px;font:inherit}#templateSelect:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+#noticeOptions[hidden]{display:none}#noticeKind{width:100%;min-height:48px;border:1px solid var(--border);border-radius:6px;background:var(--canvas);color:var(--fg);padding:10px;font:inherit}#noticeKind:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
