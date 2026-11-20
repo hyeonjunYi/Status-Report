@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>동향보고·경조사 작성 | 현장대응단</title>
-  <link rel="stylesheet" href="editor.css?v=20261120-split">
+  <link rel="stylesheet" href="editor.css?v=20261120-r2">
   <style>
     header .wrap { min-height: 48px; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; }
     header b { font-size: 16px; margin: 0; }
@@ -30,10 +30,8 @@
     <h2 class="page-title" style="font-size: 22px; margin: 10px 0 6px;">동향보고·경조사 작성</h2>
     
     <div class="type-selector" role="group" aria-label="서식 선택">
-      <span>서식 선택</span>
-      <button type="button" id="btnVehicle">소방차량 사고</button>
-      <button type="button" id="btnInjury">직원 부상</button>
-      <button type="button" id="btnNotice">경조사알림</button>
+      <label for="templateSelect">서식 선택</label>
+      <select id="templateSelect"><option value="vehicle">소방차량 사고발생 동향보고</option><option value="injury">직원 부상에 따른 동향보고</option><option value="notice">경조사알림</option></select>
       <input type="hidden" id="reportTypeVal" value="trend">
       <input type="hidden" id="trendKind" value="vehicle">
     </div>
@@ -92,7 +90,7 @@
       </div>
     </div>
   </main>
-  <script src="report.js?v=20261120-split"></script>
-  <script src="editor.js?v=20261120-split"></script>
+  <script src="report.js?v=20261120-r2"></script>
+  <script src="editor.js?v=20261120-r2"></script>
 </body>
 </html>

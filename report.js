@@ -30,7 +30,7 @@ window.FieldReport = (() => {
       ${gallery}
       <section class="additional-section"><h3>03 · 시간대별 상황</h3><table><thead><tr><th scope="col">시간</th><th scope="col">내용</th></tr></thead><tbody>${timeline||'<tr><td colspan="2">미기재</td></tr>'}</tbody></table></section>
       <section class="additional-section"><h3>04 · 향후계획</h3><p class="multiline">${e('future')}</p></section>`;
-    return `<header><div class="wrap additional-header"><b>${notice?'경조사알림':'동향보고'}</b><button onclick="window.print()">인쇄 / PDF</button></div></header><main class="wrap additional-report"><div class="additional-title"><span class="additional-kind">${notice?'경조사알림':injury?'직원 부상':'소방차량 사고발생'}</span><h2>${e('title')}</h2>${notice?'':`<p>보고 기준 ${e('updated')}</p>`}</div>${!notice&&d.manager?`<p class="additional-contact">책임자 ${e('manager')}</p>`:''}${content}<footer class="additional-footer"><strong>${e('unit')}</strong><p>작성자 ${e('author')}${d.phone?' · '+e('phone'):''}</p></footer></main>`;
+    return `<header><div class="wrap additional-header"><b>${notice?'경조사알림':'동향보고'}</b><button onclick="window.print()">인쇄 / PDF</button></div></header><main class="wrap additional-report"><div class="additional-title"><span class="additional-kind">${notice?'경조사알림':injury?'직원 부상':'소방차량 사고발생'}</span><h2>${e('title')}</h2>${notice?'':`<p>보고 기준 ${e('updated')}</p>`}</div>${content}<footer class="additional-footer"><strong>${e('unit')}</strong><p>작성자 ${e('author')}${d.phone?' · '+e('phone'):''}</p></footer></main>`;
   }
 
   function render(d){return renderAdditional(d);}

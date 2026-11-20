@@ -30,18 +30,19 @@ if($('ghSaveBtn'))$('ghSaveBtn').onclick=()=>{
   msg('GitHub 연동 정보가 저장되었습니다.');
 };
 
-function formatKST(dateObj = new Date()) {
+function formatKST(dateObj = new Date(), withWeekday = false) {
   const parts = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Asia/Seoul',
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hour12: false
   }).formatToParts(dateObj);
   const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
-  return `${p.year}.${p.month}.${p.day}. ${p.hour}:${p.minute}`;
+  const weekday = new Intl.DateTimeFormat('ko-KR', {timeZone:'Asia/Seoul',weekday:'short'}).format(dateObj);
+  return withWeekday ? `${p.year}. ${p.month}. ${p.day}.(${weekday}), ${p.hour}:${p.minute}` : `${p.year}. ${p.month}. ${p.day}. ${p.hour}:${p.minute}`;
 }
 
 const commonFields = [['title','보고서 제목'],['updated','보고 기준시각'],['unit','소속 기관'],['author','작성자 성명/직급'],['phone','작성자 연락처']];
-const trendBase = [['01 · 기본정보', [...commonFields,['manager','센터장 / 책임자 및 연락처'],['summary','보고 요지','textarea']]], ['02 · 사고 개요', [['occurred','발생일시'],['address','발생장소']]]];
+const trendBase = [['01 · 기본정보', [...commonFields,['summary','보고 요지','textarea']]], ['02 · 사고 개요', [['occurred','발생일시'],['address','발생장소']]]];
 const vehicleGroups = [...trendBase, ['03 · 사고 및 피해', [['vehicle','사고차량'],['driver','운전자'],['accident','사고내용','textarea'],['humanDamage','인명피해','textarea'],['vehicleDamage','차량피해','textarea'],['otherDamage','기타피해','textarea']]], ['04 · 경과 및 계획', [['timeline','시간대별 상황 (한 줄에 시각 | 내용)','textarea'],['future','향후계획 (수리 일정·운행 가능 여부 등)','textarea']]]];
 const injuryGroups = [...trendBase, ['03 · 부상 및 조치', [['subject','대상자 (소속·직급·성명)'],['accident','사고내용','textarea'],['injuryDetail','부상현황','textarea'],['measures','조치사항','textarea']]], ['04 · 경과 및 계획', [['timeline','시간대별 상황 (한 줄에 시각 | 내용)','textarea'],['future','향후계획','textarea']]]];
 const noticeGroups = [['01 · 알림 기본정보', [...commonFields.filter(f=>f[0]!=='updated'),['noticeText','알림 본문 (고인·관계·연령 등)','textarea']]], ['02 · 일정 및 장소', [['eventTime','일시'],['venue','빈소 / 행사장'],['address','장소 주소 (지도 표시)'],['funeralTime','발인'],['burial','장지'],['contact','연락처','textarea']]], ['03 · 마음 전하실 곳 (선택)', [['bank','은행'],['account','계좌번호'],['holder','예금주']]]];
@@ -85,7 +86,7 @@ function buildForm(type) {
 }
 
 function changed() {
-  if ($('f-updated')) $('f-updated').value = formatKST();
+
   const d = collect();
   delete d.photos;
   try { localStorage.setItem(key, JSON.stringify(d)); } catch {}
@@ -113,11 +114,13 @@ function fill(d) {
 
   allFieldNames.forEach(k => {
     if ($('f-' + k)) {
-      $('f-' + k).value = typeof d[k] === 'string' ? d[k] : '';
+      const dateFields = type === 'notice' ? ['eventTime','funeralTime'] : ['updated','occurred'];
+      $('f-' + k).value = typeof d[k] === 'string' && d[k] ? d[k] : dateFields.includes(k) ? formatKST(new Date(), type === 'notice') : '';
+      if(k === 'timeline' && !d[k]) $('f-' + k).value = formatKST() + ' | ';
     }
   });
 
-  if ($('f-updated')) $('f-updated').value = formatKST();
+
 
   photos = Array.isArray(d.photos)
     ? d.photos.filter(p => p && typeof p.caption === 'string' && FieldReport.safePhoto(p.src)).slice(0, 8)
@@ -129,13 +132,7 @@ function fill(d) {
 function setReportType(type) {
   $('reportTypeVal').value=type;
   const selected=type==='notice'?'notice':$('trendKind').value;
-  for(const [id,value] of [['btnVehicle','vehicle'],['btnInjury','injury'],['btnNotice','notice']]) {
-    const active=selected===value, btn=$(id);
-    btn.setAttribute('aria-pressed',String(active));
-    btn.style.background=active?'var(--primary)':'var(--canvas)';
-    btn.style.color=active?'#fff':'var(--fg)';
-    btn.style.borderColor=active?'var(--primary)':'var(--border)';
-  }
+  $('templateSelect').value=selected;
   buildForm(type);
 }
 function fresh(){
@@ -149,9 +146,7 @@ function switchType(type,kind){
   if(drafts[next]) fill(drafts[next]);
   else {$('reportTypeVal').value=type;$('trendKind').value=kind;fresh();}
 }
-$('btnVehicle').onclick=()=>switchType('trend','vehicle');
-$('btnInjury').onclick=()=>switchType('trend','injury');
-$('btnNotice').onclick=()=>switchType('notice','vehicle');
+$('templateSelect').onchange=()=>{const selected=$('templateSelect').value;switchType(selected==='notice'?'notice':'trend',selected==='injury'?'injury':'vehicle');};
 
 function draw() {
   const root = $('photos');
@@ -231,7 +226,7 @@ async function embedded(d) {
 }
 
 function html(d) {
-  if(d.reportType==='notice') delete d.updated; else d.updated = formatKST();
+  if(d.reportType==='notice') delete d.updated;
   const json = JSON.stringify(d).replace(/</g, '\\u003c');
   return '<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + String(d.title || '동향보고').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) + '</title><style>' + css + '</style></head><body><div id="report"></div><script>' + reportCode + '\nFieldReport.mount(' + json + ');<\/script></body></html>';
 }
